@@ -1,2 +1,2 @@
-# py-pool
+# pypool
 Python Based Connection Pool
