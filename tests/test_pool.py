@@ -1,5 +1,5 @@
 import unittest
-from pypool import pool
+from pypool import ConnectionPool, EmptyPool
 
 
 class TestResourceFactory():
@@ -20,7 +20,7 @@ class TestResource(object):
 class TestConnectionPool(unittest.TestCase):
 
     def setUp(self):
-        self.pool = pool.ConnectionPool(factory=TestResourceFactory(), maxsize=2)
+        self.pool = ConnectionPool(factory=TestResourceFactory(), maxsize=2)
 
     def test_connection_pool_sunshine(self):
 
@@ -34,5 +34,5 @@ class TestConnectionPool(unittest.TestCase):
         self.pool.get_connection()
         self.pool.get_connection()
 
-        with self.assertRaises(pool.EmptyPool):
+        with self.assertRaises(EmptyPool):
             self.pool.get_connection()
