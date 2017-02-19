@@ -15,8 +15,8 @@ class ConnectionPool(object):
         track of a resource'''
 
         def __init__(self, resource, enter, return_connection):
-            self.resource = self.resource
-            self.enter = self.enter
+            self.resource = resource
+            self.enter = enter
             self.return_connection = return_connection
             self.create_time = datetime.now()
 
@@ -54,7 +54,8 @@ class ConnectionPool(object):
 
         self.factory = factory
         self.active = 0
-        self.queue = Queue(maxsize=maxsize)
+        self.maxsize = maxsize
+        self.queue = Queue.Queue(maxsize=maxsize)
         self.lock = Lock()
         t = Thread(name='keepalive-connections',
                    target=self._keepalive,
@@ -83,13 +84,14 @@ class ConnectionPool(object):
             ''' Try and create a new instance of connection
             object'''
 
+            connection = None
             self.lock.acquire()
             try:
                 if self.active < self.maxsize:
                     resource = self.factory.create()
                     self.active += 1
-                    return ConnectionPool.Connection(resource=resource, enter=self.enter,
-                                                     return_connection=self.return_connection)
+                    connection = ConnectionPool.Connection(resource=resource, enter=self.enter,
+                                                           return_connection=self.return_connection)
 
             except Exception as ex:
                 print 'Unable to create resource: {}'.format(str(ex))
@@ -98,11 +100,13 @@ class ConnectionPool(object):
             finally:
                 self.lock.release()
 
+            return connection
+
         # Stage 1: Check if we have any connection free
         # in the pool.
         connection = None
         try:
-            connection = _get(block=False)
+            connection = _get(block=False, timeout=0)
         except Queue.Empty:
             # Stage 2: Try and create the connection
             # in case we have none available in the
@@ -155,5 +159,6 @@ class ConnectionPool(object):
                 print 'Successfully pinged the connection, putting it back in the pool'
                 self.return_connection(connection)
 
-            except Queue.Empty:
+            except EmptyPool:
+                print 'No connection available to test, sleeping'
                 time.sleep(connection_ping_rate_sec)
