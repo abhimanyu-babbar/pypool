@@ -143,7 +143,7 @@ class ConnectionPool(object):
 
             try:
                 now = datetime.now()
-                connection = self.get_connection(block=False)
+                connection = self.queue.get(block=False)
 
                 if (now - connection.create_time).seconds >= connection_timeout_sec:
                     print 'Connection alive for more than required duration, killing it'
@@ -159,6 +159,6 @@ class ConnectionPool(object):
                 print 'Successfully pinged the connection, putting it back in the pool'
                 self.return_connection(connection)
 
-            except EmptyPool:
+            except Queue.Empty:
                 print 'No connection available to test, sleeping'
                 time.sleep(connection_ping_rate_sec)
