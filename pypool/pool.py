@@ -44,8 +44,8 @@ class ConnectionPool(object):
         def close(self):
             try:
                 self.resource.close()
-            finally:
-                return True
+            except:
+                pass
 
     def __init__(self, factory,
                  maxsize=10,
