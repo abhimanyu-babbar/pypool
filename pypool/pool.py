@@ -134,9 +134,11 @@ class ConnectionPool(object):
                 return
 
             self.lock.acquire()
-            connection.close()
-            self.active -= 1
-            self.lock.release()
+            try:
+                connection.close()
+            finally:
+                self.active -= 1
+                self.lock.release()
 
         print 'Starting background process to ping connections'
         while True:
